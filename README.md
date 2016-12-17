@@ -109,3 +109,11 @@ When you are finished, you can exit the application in two ways:
 * **q** - Exit the software and do not save changes. Any annotations performed in this session will be lost. Any file read in at the start will be left unedited from its original state.
 
 Alternatively, you will exit automatically when you hit Return on the last frame.
+
+## Licence
+
+This software is licensed under the GNU Public License. See the licence file for more information.
+
+## Author
+
+This software was written by Christopher Bridge at the Insitute of Biomedical Engineering, University of Oxford.
