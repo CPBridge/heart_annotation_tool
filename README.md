@@ -50,12 +50,18 @@ $ make clean
 
 This tool allows you to annotate a `.avi` video, and store the results in a `.tk` track file (a plain text file with `.tk` extension).
 
-It expects two inputs: the path to the video file (the `-v` option), and the location of the directory to store the track in (the `-t` option). These options can appear in any order. For example, to annotate a video at `/path/to/a/video.avi` and store the results in `/another/path/to/tracks/`, issue the following:
+#### Opening a Video
+
+To open a video in the annotation tool from the command line, you need to provide two inputs: the path to the video file (the `-v` option), and the location of the directory to store the track in (the `-t` option). These options can appear in any order. For example, to annotate a video at `/path/to/a/video.avi` and store the results in `/another/path/to/tracks/`, issue the following:
 
 ```bash
 $ ./heart_annotations -v /path/to/a/video.avi -t /another/path/to/tracks/
 ```
-This will store the output in `.tk` in the specified directory and the name of this file will be the same as the video (minus the path and `.avi` extension). For example, in the above case, the output file would be called `/another/path/to/tracks/video.tk`. If there is already a file of that name in the directory, the software will read in this file and allow you to edit a previous set of annotations and save the changes, overwriting the previous file.
+This will store the output in a `.tk` file in the specified directory and the name of this file will be the same as the video (minus the path and `.avi` extension). For example, in the above case, the output file would be called `/another/path/to/tracks/video.tk`. If there is already a file of that name in the directory, the software will read in this file and allow you to edit a previous set of annotations and save the changes, overwriting the previous file.
+
+If you do not provide an output directory, the current working directory is used.
+
+#### Annotating a Frame
 
 When you open the tool, you will see the first frame of the video appear with a circle in the middle. The different variables are displayed as follows:
 
@@ -66,4 +72,40 @@ When you open the tool, you will see the first frame of the video appear with a 
 * The cardiac phase is shown by the arrow head moving up and down the radial (this will not appear until some annotations are made, see below). If the arrow is moving radially outwards, that is systole, and if it is moving radial inwards that is diastole. When the arrow reaches the two ends of the line, that frame is the end-systole/end-diastole frame, as relevant.
 * The heart visibility is represented by the presence and appearance of the cirlce. If the circle is present and bright, the heart is visible. If it is present but darker in colour, the heart is obscured. If it is not visible at all, the heart is invisible.
 
-You can use the keyboard to move through the frames and manipulate the variables.
+Within a frame you can use the keyboard to manipulate the variables using the following keys:
+
+* **Arrow Keys** - Move the annotation centre in the chosen direction. (Hold ctrl to move faster.)
+* **c/a** - Rotate the annotation clockwise (c) or anticlockwise (a). (Hold ctrl to move faster.)
+* **1/2/3** - Change the annotation view to four-chamber (1) / left-ventricular outflow (2) / three vessels (3).
+* **s/d** - Mark this frame as an end-systole frame (s) or an end-diastole (d) frame. The same key will also remove a previous labelling. (Note that a single frame can only hold one of these two labels and any subsequent label of the other type will override it.)
+* **+/-** - Increase or decrease the radius annotation (applies to the whole video, not just the current frame).
+* **Delete** - Cycles between not visible, visible, and obscured.
+
+#### Moving Through Frames and Storing Annotations
+
+The tool stores an array of the annotations for each frame in the video in memory (the 'buffer'). This also remembers which frames you have previously annotated, and which you have not.
+
+You can move through the frames with the following keys:
+* Return - Move forwards one frame and save annotations for the current frame to the buffer.
+* Backscape - Move backwards one frame and save annotations for the current frame to the buffer.
+* p - (Play) Move forwards one frame and do *not* store annotations (useful for viewing the video whilst not annotating).
+* r - (Rewind) Move backwards one frame and do *not* store annotations.
+
+Whenever you use return or backspace to move to a frame that has no previously stored annotation, the initial value for that annotation will be copied from the value that was just stored in the frame that was previously being annotated. This does not apply the diastole and systole frame labellings, which are reset in the new frame. In this way annotations are propogated through the video, allowing you to make lots of similar annotations quickly in sequences where the heart orientation/position/view does not change by just repeatedly tapping or holding down return/backspace. However if you move to a frame where there *is* a previous annotation stored in the buffer, this previous annotation will be restored instead of propogating the annotation from the neighbouring frame.
+
+Occasionally you may want to propogate annotations through sequences of frames even when those frames *do* have previously stored annotations in the buffer. This may happen for example when correcting a mistake you have made over a number of frames. You can do this by activating *overwrite mode* by pressing the **o** key. When this mode is active, annotations will always be propogated from one frame to the next when you press return or enter. Use this with caution however, as it is easy to mistakenly overwrite previously annotated frames. You can see when you are in overwrite mode as "OVERWRITE MODE" will appear in yellow text in the bottom right of the image, and return to normal behaviour by pressing **o** again.
+
+#### Cardiac Phase Annotations
+
+The values for the cardiac phase are not directly annotated but instead are inferred from your end-diastole (ED) and end-systole (ES) labels by interpolating. To do this, annotate the ED/ES frames, and then tap the **z** key to calculate the circular-valued cardiac values. These can then be seen by the arrowhead moving in and out along the orientation line (in = diastole, out = systole), but only after they have been calculated for the first time. Note that if you then make subsequent changes to the ED/ES frames, you will need to tap **z** again to update the cardiac phase values.
+
+As well as interpolating values for the cardiac phase, the routine also extrapolates estimated positions for ED and ES frames by assuming a consant phase rate. Therefore you do not need to label every single ED/ES frame in video in order to hit the strongly, although it is stringly recommended that you manually annotate as many as you can. You can see the automatically selected ED/ED frames appear with the text in brackets "ED"/"ES". If the routine has insufficient annotated frames, you will see a warning message output to the terminal and the values will not be updated.
+
+#### Exiting
+
+When you are finished, you can exit the application in two ways:
+
+* **Esc** - Exit the software and save the annotations to file. If an existing annotation file was read in when the software started, it will be overwritten.
+* **q** - Exit the software and do not save changes. Any annotations performed in this session will be lost. Any file read in at the start will be left unedited from its original state.
+
+Alternatively, you will exit automatically when you hit Return on the last frame.

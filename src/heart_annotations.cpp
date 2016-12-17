@@ -19,25 +19,21 @@ namespace ut = thesisUtilities;
 #define VIEW_4CHAM 1
 #define VIEW_LVOT 2
 #define VIEW_RVOT 3
-#define VIEW_VSIGN 4
 
 // View Keys
 #define CHAM4_KEY ONE_KEY
 #define LVOT_KEY TWO_KEY
 #define RVOT_KEY THREE_KEY
-#define VSIGN_KEY FOUR_KEY
 
 // View Strings
 #define STR_4CHAM "4-CHAM"
 #define STR_LVOT "LVOT"
 #define STR_RVOT "3V"
-#define STR_VSIGN "V-SIGN"
 
 // View Colours
 #define CLR_4CHAM Scalar(255,255,0) // cyan
 #define CLR_LVOT Scalar(0,255,0) // green
 #define CLR_RVOT Scalar(0,255,255) // yellow
-#define CLR_VSIGN Scalar(0,0,255)  // red
 
 // Labellings for cardiac phase points
 #define NOT_LABELLED 0
@@ -136,7 +132,6 @@ int main(int argc, char** argv)
 			"  1          : Mark as 4CHAM view\n"
 			"  2          : Mark as LVOT view\n"
 			"  3          : Mark as 3V view\n"
-			"  4          : Mark as VSIGN view\n"
 			"  S          : Mark frame as end-systole (toggle) \n"
 			"  D          : Mark frame as end-diastole (toggle) \n"
 			"  Z          : Automatically (re-)calculate cardiac phase values \n"
@@ -303,10 +298,6 @@ int main(int argc, char** argv)
 					colour = CLR_RVOT;
 					view_string = STR_RVOT;
 					break;
-				case VIEW_VSIGN:
-					colour = CLR_VSIGN;
-					view_string = STR_VSIGN;
-					break;
 			}
 
 			if(heart_present == ut::hpObscured)
@@ -433,10 +424,6 @@ int main(int argc, char** argv)
 
 					case RVOT_KEY:
 						view_label = VIEW_RVOT;
-						break;
-
-					case VSIGN_KEY:
-						view_label = VIEW_VSIGN;
 						break;
 
 					case O_KEY:
