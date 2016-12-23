@@ -78,8 +78,10 @@ Within a frame you can use the keyboard to manipulate the variables using the fo
 * **c/a** - Rotate the annotation clockwise (c) or anticlockwise (a). (Hold ctrl to move faster.)
 * **1/2/3** - Change the annotation view to four-chamber (1) / left-ventricular outflow (2) / three vessels (3).
 * **s/d** - Mark this frame as an end-systole frame (s) or an end-diastole (d) frame. The same key will also remove a previous labelling. (Note that a single frame can only hold one of these two labels and any subsequent label of the other type will override it.)
-* **+/-** - Increase or decrease the radius annotation (applies to the whole video, not just the current frame).
 * **Delete** - Cycles between not visible, visible, and obscured.
+* **+/-** - Increase or decrease the radius annotation (applies to the whole video, not just the current frame).
+* **h** - Toggle between the two 'flips'. These are indicated by the 'L' and 'R'
+on the diplay indicating the anatomical left and right sides of the heart (applies to the whole video, not just the current frame).
 
 #### Moving Through Frames and Storing Annotations
 
@@ -140,6 +142,10 @@ data_table[0,hapu.tk_viewCol] # heart view
 data_table[0,hapu.tk_phasePointsCol] # flags for end-diastole/systole frames
 data_table[0,hapu.tk_cardiacPhaseCol] # the circular cardiac phase variable
 ```
+
+## Usage: substructure_annotations
+
+Instructions for this coming soon...
 
 ## Licence
 

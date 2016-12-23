@@ -20,9 +20,104 @@ stk_yposCol = 3
 stk_xposCol = 4
 stk_oriCol = 5
 
+# Reads in the information in a heart track file and returns
+def readHeartTrackFile(filename) :
+	'''
+	Read data from a heart track (.tk) file.
+
+	Arguments:
+	* filename -- String containing file path and name for the .tk file to read from
+
+	Returns:
+	* table -- numpy array containing the data for each frame.
+	  Each row corresponds to a frame and each column corresponds to a variable.
+	  The columns my be indexed by the variables tk_frameCol, tk_labelledCol,
+	  tk_presentCol, tk_yposCol, tk_xposCol, tk_oriCol, tk_viewCol,
+	  tk_phasePointsCol, tk_cardiacPhaseCol
+	* image_dims -- 2-element list containing width and height of the video in
+	  pixels
+	* headup -- Boolean variable indicating the 'flip' of the video. True
+	  indicates that the cross section is being viewed along the direction from
+	  the fetal head to the fetal toes. False indicates the other direction.
+	'''
+
+	# Open the file to read info on the first couple of lines
+	with open(filename) as infile :
+		# Skip the first comment line
+		infile.readline()
+
+		# The next line contains the image dimensions
+		image_dims = list(map(int,infile.readline().split()))
+
+		# The next line contains the headup and radius information
+		line_info = infile.readline().split()
+		headup = bool(line_info[0])
+		radius = float(line_info[1])
+
+	# Now use loadtxt to read the rest of the data
+	table = np.loadtxt(filename,skiprows=3)
+	return table,image_dims,headup,radius
+
+
+
+# Reads the track file and return as rows of dictionaries
+def readHeartTrackFileAsDicts(filename) :
+	'''
+	Read data from a heart track (.tk) file and return the frame-wise
+	annotations as a list of dictionaries.
+
+	Arguments:
+	* filename -- String containing file path and name for the .tk file to read from
+
+	Returns:
+	* dict_rows -- A list of dictionaries, with one dictionary per frame.
+	  For each dictionary, the keys 'frame', 'x', 'y', 'view', 'labelled',
+	  'present', 'ori' and 'phase' may be usedto access the relevant variables. 
+	* image_dims -- 2-element list containing width and height of the video in
+	  pixels
+	* headup -- Boolean variable indicating the 'flip' of the video. True
+	  indicates that the cross section is being viewed along the direction from
+	  the fetal head to the fetal toes. False indicates the other direction.
+	'''
+
+	# Use above function to get the data
+	table,image_dims,headup,radius = readHeartTrackFile(filename)
+
+	# Create list of independent empty dictionaries
+	dict_rows = [{} for _ in range(len(table))]
+
+	# Loop and add data to the dictionaries
+	for dict_row,table_row in zip(dict_rows,table):
+		dict_row['frame'] = int(table_row[tk_frameCol])
+		dict_row['y'] = int(table_row[tk_yposCol])
+		dict_row['x'] = int(table_row[tk_xposCol])
+		dict_row['view'] = int(table_row[tk_viewCol])
+		dict_row['labelled'] = int(table_row[tk_labelledCol]) > 0
+		dict_row['present'] = int(table_row[tk_presentCol])
+		dict_row['ori'] = float(table_row[tk_oriCol])*(math.pi/180.0)
+		dict_row['phase'] = float(table_row[tk_cardiacPhaseCol])
+
+	return dict_rows,image_dims,headup,radius
 
 # Function to read a single structure track from a trackfile
-def readStructure(filename,substructure):
+def readStructure(filename,structure):
+	'''
+	Read data for a single specified structure from a structure track (.stk)
+	file.
+
+	Arguments:
+	* filename -- String containing file path and name for the .stk file to read
+	  from
+	* structure -- String containing name of structure to read
+
+	Returns:
+	* table -- numpy array containing data for the structure. Rows contain
+	  frames, columns contain variables.
+	  The columns may be indexed by the variables stk_frameCol, stk_labelledCol,
+	  stk_presentCol, stk_yposCol, stk_xposCol, and stk_oriCol.
+	  If the requested structure is not in the file, the return value will be
+	  None.
+	'''
 	# Read in text in one monlithic block
 	with open(filename,'r') as infile :
 		text = infile.read()
@@ -75,48 +170,3 @@ def readStructureList(filename) :
 	structuresPerView = [ [struct for struct in range(len(names_list)) if view in viewsPerStructure[struct]] for view in range(maxView+1)]
 
 	return names_list, viewsPerStructure, structuresPerView, systole_only, fourier_order
-
-
-
-# Reads in the information in a heart track file and returns
-def readHeartTrackFile(filename) :
-
-	# Open the file to read info on the first couple of lines
-	with open(filename) as infile :
-		# Skip the first comment line
-		infile.readline()
-
-		# The next line contains the image dimensions
-		image_dims = map(int,infile.readline().split())
-
-		# The next line contains the headup and radius information
-		line_info = infile.readline().split()
-		headup = bool(line_info[0])
-		radius = float(line_info[1])
-
-	# Now use loadtxt to read the rest of the data
-	table = np.loadtxt(filename,skiprows=3)
-	return table,image_dims,headup,radius
-
-
-
-# Reads the track file and return as rows of dictionaries
-def readHeartTrackFileAsRows(filename) :
-	# Use above function to get the data
-	table,image_dims,headup,radius = readHeartTrackFile(filename)
-
-	# Create list of independent empty dictionaries
-	dict_rows = [{} for _ in range(len(table))]
-
-	# Loop and add data to the dictionaries
-	for dict_row,table_row in zip(dict_rows,table):
-		dict_row['frame'] = int(table_row[tk_frameCol])
-		dict_row['y'] = int(table_row[tk_yposCol])
-		dict_row['x'] = int(table_row[tk_xposCol])
-		dict_row['class'] = int(table_row[tk_viewCol])
-		dict_row['labelled'] = int(table_row[tk_labelledCol]) > 0
-		dict_row['present'] = int(table_row[tk_presentCol])
-		dict_row['ori'] = float(table_row[tk_oriCol])*(math.pi/180.0)
-		dict_row['phase'] = float(table_row[tk_cardiacPhaseCol])
-
-	return dict_rows,image_dims,headup,radius
