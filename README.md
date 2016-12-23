@@ -110,6 +110,37 @@ When you are finished, you can exit the application in two ways:
 
 Alternatively, you will exit automatically when you hit Return on the last frame.
 
+## Using Track Files
+
+The track files that are created by the tool are simple text files that follow the format described on [this page](reference/trackfiles.md) (.tk files) and [this page](reference/structtrackfiles.md) (.stk files).
+
+In both cases, there are C++ functions in `thesisUtilities.cpp` to read the information from a trackfile. These should be self-explanatory to use.
+
+Furthermore, Python functions to read the files are provided in `python-utilities/heart_annotation_python_utilities.py`. The function `readHeartTrackFile` takes a filename and returns the track data as a numpy array in which each row corresponds to a frame and each column corresponds to one of the variables.
+
+```python
+# Import the module
+import heart_annotation_python_utilities as hapu
+
+# An example path to a trackfile of interested
+filename = 'path/to/testvideo.tk'
+
+# Read in the file
+data_table,image_dimensions,image_flip,heart_radius = hapu.readHeartTrackFile(filename)
+
+# Now the data can be accessed with the column index variables
+# For example, to access all the variables relating to the first frame (index 0), use
+data_table[0,hapu.tk_frameCol] # the frame number
+data_table[0,hapu.tk_labelledCol] # the Boolean 'labelled' variable
+data_table[0,hapu.tk_presentCol] # indicates whether the variable is present
+data_table[0,hapu.tk_yposCol] # y location of heart centre
+data_table[0,hapu.tk_xposCol] # x location of the heart centre
+data_table[0,hapu.tk_oriCol] # heart orientation
+data_table[0,hapu.tk_viewCol] # heart view
+data_table[0,hapu.tk_phasePointsCol] # flags for end-diastole/systole frames
+data_table[0,hapu.tk_cardiacPhaseCol] # the circular cardiac phase variable
+```
+
 ## Licence
 
 This software is licensed under the GNU Public License. See the licence file for more information.
