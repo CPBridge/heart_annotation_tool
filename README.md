@@ -14,13 +14,13 @@ There are two tools:
 * The [OpenCV](http://opencv.org) library. Tested on version 3.1.0 but most fairly recent
 versions should be compatible. If you are using GNU/Linux, there will probably
 be a suitable packaged version in your distribution's repository.
-* The [Boost](http://www.boost.org) program options library. Again there is likely to be a suitable packaged version on your GNU/Linux distribution (probably packed along with the other boost libraries). You will also need the development headers, which are sometimes packaged separately.
+* The [Boost](http://www.boost.org) program options, system and filesystem libraries. Again there are likely to be suitable packaged versions on your GNU/Linux distribution (probably packed along with the other boost libraries). You will also need the development headers, which are sometimes packaged separately.
 
 ## Build
 
 First ensure you have installed the dependencies as above.
 
-Compile the two files `heart_annotations.cpp` and `substructure_annotations.cpp` using your C++ compiler, making sure to specify C++11 if necessary, and link against the OpenCV libraries and the Boost program options library.
+Compile the two files `heart_annotations.cpp` and `substructure_annotations.cpp` using your C++ compiler, making sure to specify C++11 if necessary, and link against the OpenCV libraries and the Boost program options, filesystem and system libraries.
 
 There is Makefile in the `build/` directory to simplify this process for users with GNU/Linux operating systems or similar. To use this, issue one of the following commands from the `build/` directory.
 

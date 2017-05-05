@@ -8,6 +8,7 @@
 #include <string>
 #include <list>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include "thesisUtilities.h"
 #include "opencvkeys.h"
 
@@ -15,6 +16,7 @@ using namespace cv;
 using namespace std;
 namespace ut = thesisUtilities;
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 #define C_SELECT_CLICK_DISTANCE 10.0
 
@@ -131,16 +133,16 @@ int main(int argc, char** argv)
 	VideoCapture vid_obj;
 	bool irrelevant_key, exit_flag, read_error = false, read_success = false, record_mode = false, motion_prediction = true;
 	VideoWriter output_video;
-	string outvidname, trackdir, hearttrackdir, vidname, structfilename;
+	fs::path trackdir, hearttrackdir, vidname, structfilename;
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help,h", "produce help message")
-		("video,v", po::value<string>(&vidname), "input video file")
-		("structure_file,s", po::value<string>(&structfilename)->default_value("structures"), "file containing list of structures to annotate")
-		("trackdirectory,t", po::value<string>(&trackdir)->default_value("./"), "directory containing the input/output track file")
-		("hearttrackdirectory,d", po::value<string>(&hearttrackdir)->default_value("./"), "directory containing the relevant track file")
+		("video,v", po::value<fs::path>(&vidname), "input video file")
+		("structure_file,s", po::value<fs::path>(&structfilename)->default_value("structures"), "file containing list of structures to annotate")
+		("trackdirectory,t", po::value<fs::path>(&trackdir)->default_value("."), "directory containing the input/output track file")
+		("hearttrackdirectory,d", po::value<fs::path>(&hearttrackdir)->default_value("."), "directory containing the relevant track file")
 		("record,r" , "record the visualisation in a video file");
 
 	po::variables_map vm;
@@ -157,12 +159,8 @@ int main(int argc, char** argv)
 	if (vm.count("record"))
 		record_mode = true;
 
-	// Append trailing slash if necessary
-	if(trackdir.at(trackdir.length() -1 ) != '/')
-	trackdir += '/';
-
 	// Open
-	vid_obj.open(vidname);
+	vid_obj.open(vidname.string());
 	if ( !vid_obj.isOpened())
 	{
 		cout  << "Could not open reference " << vidname << endl;
@@ -211,7 +209,7 @@ int main(int argc, char** argv)
 	// Occasionally OpenCV fails to find the frame rate, need to get the user to provide one
 	if(isnan(frame_rate))
 	{
-		frame_rate = ut::getFrameRate(vidname,vidname.substr(0,vidname.find_last_of("/")));
+		frame_rate = ut::getFrameRate(vidname.string(),vidname.parent_path().string());
 		if(isnan(frame_rate))
 		{
 			cout << "OpenCV cannot automatically determine the frame rate, please manually provide one (in frames per second): " << endl << ">> " ;
@@ -221,7 +219,7 @@ int main(int argc, char** argv)
 	cout << "Using frame rate: " << frame_rate << endl;
 
 	// Read in structures to label
-	ifstream structfile(structfilename.c_str());
+	ifstream structfile(structfilename.string().c_str());
 	vector<vector<int>> views_per_structure;
 	if(structfile.is_open())
 	{
@@ -256,20 +254,16 @@ int main(int argc, char** argv)
 	vector<vector<ut::subStructLabel_t>> track(n_frames, vector<ut::subStructLabel_t>(n_structures)) ;
 
 	// Look for an existing track file
-	string outfilename = vidname;
-	string hearttrackfilename;
-	outfilename.erase(outfilename.find_last_of("."), string::npos);
-	outfilename.erase(0,outfilename.find_last_of("/")+1);
-	outvidname = trackdir + outfilename + "_labels.avi";
-	hearttrackfilename = hearttrackdir + outfilename + ".tk";
-	outfilename = trackdir + outfilename + ".stk";
+	const fs::path outvidname = trackdir / vidname.stem().concat("_labels").replace_extension(".avi");
+	const fs::path hearttrackfilename = hearttrackdir / vidname.stem().replace_extension(".tk");
+	const fs::path outfilename = trackdir / vidname.stem().replace_extension(".stk");
 
 	// Open it to check it exists (there may be a better way to do this...)
-	ifstream infile(outfilename.c_str());
+	ifstream infile(outfilename.string().c_str());
 	if (infile.is_open())
 	{
 		infile.close(); // close it to let the dedicated function read it
-		read_success = ut::readSubstructuresTrackFile(outfilename, n_frames, structure_names, track);
+		read_success = ut::readSubstructuresTrackFile(outfilename.string(), n_frames, structure_names, track);
 		read_error = !read_success;
 	}
 	else
@@ -282,7 +276,7 @@ int main(int argc, char** argv)
 
 	// Also get the view label information from the heart track file
 
-	ifstream htfile(hearttrackfilename.c_str());
+	ifstream htfile(hearttrackfilename.string().c_str());
 	if (htfile.is_open())
 	{
 		htfile.close(); // close it to let the dedicated function read it
@@ -292,7 +286,7 @@ int main(int argc, char** argv)
 		vector<bool> labelled_track(n_frames); vector<int> centrey_track(n_frames); vector<int> centrex_track(n_frames);
 		vector<int> ori_track(n_frames); vector<int> phase_point_track(n_frames); vector<float> cardiac_phase_track(n_frames);
 
-		if(!ut::readTrackFile(hearttrackfilename, n_frames, headup, radius, labelled_track, heart_present_track, centrey_track,
+		if(!ut::readTrackFile(hearttrackfilename.string(), n_frames, headup, radius, labelled_track, heart_present_track, centrey_track,
 			                       centrex_track, ori_track, view_label_track, phase_point_track, cardiac_phase_track) )
 		{
 			cerr << "Could not read heart track information from " << hearttrackfilename << endl;
@@ -323,7 +317,7 @@ int main(int argc, char** argv)
 	if(record_mode)
 	{
 		int ex = static_cast<int>(vid_obj.get(CV_CAP_PROP_FOURCC));
-		output_video.open(outvidname, ex, frame_rate, Size(xsize,ysize), true);
+		output_video.open(outvidname.string(), ex, frame_rate, Size(xsize,ysize), true);
 
 		if (!output_video.isOpened())
 		{

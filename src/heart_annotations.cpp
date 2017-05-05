@@ -7,33 +7,39 @@
 #include <string>
 #include <list>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include "thesisUtilities.h"
 #include "opencvkeys.h"
 
 using namespace cv;
 using namespace std;
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 namespace ut = thesisUtilities;
 
 // View Codes
 #define VIEW_4CHAM 1
 #define VIEW_LVOT 2
 #define VIEW_RVOT 3
+#define VIEW_VSIGN 4
 
 // View Keys
 #define CHAM4_KEY ONE_KEY
 #define LVOT_KEY TWO_KEY
 #define RVOT_KEY THREE_KEY
+#define VSIGN_KEY FOUR_KEY
 
 // View Strings
 #define STR_4CHAM "4-CHAM"
 #define STR_LVOT "LVOT"
 #define STR_RVOT "3V"
+#define STR_VSIGN "V-SIGN"
 
 // View Colours
 #define CLR_4CHAM Scalar(255,255,0) // cyan
 #define CLR_LVOT Scalar(0,255,0) // green
 #define CLR_RVOT Scalar(0,255,255) // yellow
+#define CLR_VSIGN Scalar(0,0,255)  // red
 
 // Labellings for cardiac phase points
 #define NOT_LABELLED 0
@@ -64,17 +70,16 @@ int main(int argc, char** argv)
 	bool irrelevant_key, exit_flag, overwrite_mode = false, read_error = false, read_success = false, record_mode = false,
 		 just_stored_label = false, cardiac_phase_valid = false;
 	Scalar colour;
-	string view_string, outvidname;
+	string view_string;
 	VideoWriter output_video;
-	string trackdir;
-	string vidname;
+	fs::path trackdir, vidname;
 
 	// Declare the supported options.
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help,h", "produce help message")
-		("video,v", po::value<string>(&vidname), "input video file")
-		("trackdirectory,t", po::value<string>(&trackdir)->default_value("./"), "directory containing the input/output track file")
+		("video,v", po::value<fs::path>(&vidname), "input video file")
+		("trackdirectory,t", po::value<fs::path>(&trackdir)->default_value("."), "directory containing the input/output track file")
 		("record,r" , "record the visualisation in a video file");
 
 	po::variables_map vm;
@@ -91,12 +96,8 @@ int main(int argc, char** argv)
 	if (vm.count("record"))
 		record_mode = true;
 
-	// Append trailing slash if necessary
-	if(trackdir.at(trackdir.length() -1 ) != '/')
-	trackdir += '/';
-
 	// Open
-	vid_obj.open(vidname);
+	vid_obj.open(vidname.string());
 	if ( !vid_obj.isOpened())
 	{
 		cerr  << "Could not open reference " << vidname << endl;
@@ -132,6 +133,7 @@ int main(int argc, char** argv)
 			"  1          : Mark as 4CHAM view\n"
 			"  2          : Mark as LVOT view\n"
 			"  3          : Mark as 3V view\n"
+			"  4          : Mark as VSIGN view\n"
 			"  S          : Mark frame as end-systole (toggle) \n"
 			"  D          : Mark frame as end-diastole (toggle) \n"
 			"  Z          : Automatically (re-)calculate cardiac phase values \n"
@@ -148,7 +150,7 @@ int main(int argc, char** argv)
 	// Occasionally OpenCV fails to find the frame rate, need to get the user to provide one
 	if(isnan(frame_rate))
 	{
-		frame_rate = ut::getFrameRate(vidname,vidname.substr(0,vidname.find_last_of("/")));
+		frame_rate = ut::getFrameRate(vidname.string(),vidname.parent_path().string());
 		if(isnan(frame_rate))
 		{
 			cout << "OpenCV cannot automatically determine the frame rate, please manually provide one (in frames per second): " << endl << ">> " ;
@@ -168,18 +170,13 @@ int main(int argc, char** argv)
 	vector<float> cardiac_phase_track(n_frames);
 
 	// Look for an existing track file
-	string outfilename = vidname;
-	outfilename.erase(outfilename.find_last_of("."), string::npos);
-	outfilename.erase(0,outfilename.find_last_of("/")+1);
-	outvidname = trackdir + outfilename + "_labels.avi";
-	outfilename = trackdir + outfilename + ".tk";
+	const fs::path outvidname = trackdir / vidname.stem().concat("_labels").replace_extension(".avi");
+	const fs::path outfilename = trackdir / vidname.stem().replace_extension(".tk");
 
-	// Open it to check it exists (there may be a better way to do this...)
-	ifstream infile(outfilename.c_str());
-	if (infile.is_open())
+	// Check it exists
+	if(fs::exists(outfilename))
 	{
-		infile.close(); // close it to let the dedicated function read it
-		read_success = ut::readTrackFile(outfilename, n_frames, headup, radius, labelled_track, heart_present_track, centrey_track,
+		read_success = ut::readTrackFile(outfilename.string(), n_frames, headup, radius, labelled_track, heart_present_track, centrey_track,
 			                       centrex_track, ori_track, view_label_track, phase_point_track, cardiac_phase_track);
 		read_error = !read_success;
 	}
@@ -211,7 +208,7 @@ int main(int argc, char** argv)
 	if(record_mode)
 	{
 		int ex = static_cast<int>(vid_obj.get(CV_CAP_PROP_FOURCC));
-		output_video.open(outvidname, ex, frame_rate, Size(xsize,ysize), true);
+		output_video.open(outvidname.string(), ex, frame_rate, Size(xsize,ysize), true);
 
 		if (!output_video.isOpened())
 		{
@@ -297,6 +294,10 @@ int main(int argc, char** argv)
 				case VIEW_RVOT:
 					colour = CLR_RVOT;
 					view_string = STR_RVOT;
+					break;
+				case VIEW_VSIGN:
+					colour = CLR_VSIGN;
+					view_string = STR_VSIGN;
 					break;
 			}
 
@@ -426,6 +427,10 @@ int main(int argc, char** argv)
 						view_label = VIEW_RVOT;
 						break;
 
+					case VSIGN_KEY:
+						view_label = VIEW_VSIGN;
+						break;
+
 					case O_KEY:
 						overwrite_mode = !overwrite_mode;
 						break;
@@ -528,7 +533,7 @@ int main(int argc, char** argv)
 	// Write to file
 	if( (key_press != Q_KEY) && (!record_mode) )
 	{
-		ofstream outfile(outfilename.c_str());
+		ofstream outfile(outfilename.string().c_str());
 		if (!outfile.is_open())
 			return false;
 
