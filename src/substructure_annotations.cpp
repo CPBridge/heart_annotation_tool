@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-    cout << "Heart Substructures Annotation Tool \n"
+	cout << "Heart Substructures Annotation Tool \n"
 			"Control List: \n"
 			"  Arrow Keys    : Move substructure (shift increases speed)\n"
 			"  A/C           : Rotate substructure anticlockwise/clockwise (shift increases speed)\n"
@@ -231,6 +231,8 @@ int main(int argc, char** argv)
 			structure_names.emplace_back(namestring);
 			views_per_structure.emplace_back(vector<int>());
 
+			int fourier_order;
+			ss >> fourier_order;
 			bool systole_only;
 			ss >> systole_only; // FIXME currently not doing anything with this
 
