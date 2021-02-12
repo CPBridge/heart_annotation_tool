@@ -11,7 +11,7 @@ There are two tools:
 ## Dependencies
 
 * A C++ compiler conforming to the C++11 standard or later.
-* The [OpenCV](http://opencv.org) library. Tested on version 3.1.0 but most fairly recent
+* The [OpenCV](http://opencv.org) library. Tested on version 4.2 but most fairly recent
 versions should be compatible. If you are using GNU/Linux, there will probably
 be a suitable packaged version in your distribution's repository.
 * The [Boost](http://www.boost.org) program options, system and filesystem libraries. Again there are likely to be suitable packaged versions on your GNU/Linux distribution (probably packed along with the other boost libraries). You will also need the development headers, which are sometimes packaged separately.
