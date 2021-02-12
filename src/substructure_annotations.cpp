@@ -167,10 +167,10 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	xsize = vid_obj.get(CV_CAP_PROP_FRAME_WIDTH);
-	ysize = vid_obj.get(CV_CAP_PROP_FRAME_HEIGHT);
-	n_frames = vid_obj.get(CV_CAP_PROP_FRAME_COUNT);
-	frame_rate = vid_obj.get(CV_CAP_PROP_FPS);
+	xsize = vid_obj.get(cv::CAP_PROP_FRAME_WIDTH);
+	ysize = vid_obj.get(cv::CAP_PROP_FRAME_HEIGHT);
+	n_frames = vid_obj.get(cv::CAP_PROP_FRAME_COUNT);
+	frame_rate = vid_obj.get(cv::CAP_PROP_FPS);
 
 	// Read in all frames into a buffer (this gets around decoding issues)
 	I.resize(n_frames);
@@ -318,7 +318,7 @@ int main(int argc, char** argv)
 	// Create an output video
 	if(record_mode)
 	{
-		int ex = static_cast<int>(vid_obj.get(CV_CAP_PROP_FOURCC));
+		int ex = static_cast<int>(vid_obj.get(cv::CAP_PROP_FOURCC));
 		output_video.open(outvidname.string(), ex, frame_rate, Size(xsize,ysize), true);
 
 		if (!output_video.isOpened())
@@ -358,8 +358,8 @@ int main(int argc, char** argv)
 		if(motion_prediction && previousf >= 0 && any_of(just_stored_label.cbegin(),just_stored_label.cend(), [](bool b){return b;}) )
 		{
 			Mat oldim, newim;
-			cvtColor(I[previousf],oldim,CV_BGR2GRAY);
-			cvtColor(I[f],newim,CV_BGR2GRAY);
+			cvtColor(I[previousf],oldim,cv::COLOR_BGR2GRAY);
+			cvtColor(I[f],newim,cv::COLOR_BGR2GRAY);
 			calcOpticalFlowFarneback(oldim,newim,flow,0.5/*PYR_SCALE*/,3/*LEVELS*/,30/*WINSIZE*/,3/*ITERATIONS*/,7/*POLY_N*/,1.5/*POLY_SIGMA*/,OPTFLOW_FARNEBACK_GAUSSIAN/*FLAGS*/);
 		}
 		for (int s = 0; s < n_structures; ++s)

@@ -104,10 +104,10 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	xsize = vid_obj.get(CV_CAP_PROP_FRAME_WIDTH);
-	ysize = vid_obj.get(CV_CAP_PROP_FRAME_HEIGHT);
-	n_frames = vid_obj.get(CV_CAP_PROP_FRAME_COUNT);
-	frame_rate = vid_obj.get(CV_CAP_PROP_FPS);
+	xsize = vid_obj.get(cv::CAP_PROP_FRAME_WIDTH);
+	ysize = vid_obj.get(cv::CAP_PROP_FRAME_HEIGHT);
+	n_frames = vid_obj.get(cv::CAP_PROP_FRAME_COUNT);
+	frame_rate = vid_obj.get(cv::CAP_PROP_FPS);
 
 	// Read in all frames into a buffer (this gets around decoding issues)
 	I.resize(n_frames);
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 	// Create an output video
 	if(record_mode)
 	{
-		int ex = static_cast<int>(vid_obj.get(CV_CAP_PROP_FOURCC));
+		int ex = static_cast<int>(vid_obj.get(cv::CAP_PROP_FOURCC));
 		output_video.open(outvidname.string(), ex, frame_rate, Size(xsize,ysize), true);
 
 		if (!output_video.isOpened())
